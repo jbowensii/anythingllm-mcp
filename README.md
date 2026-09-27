@@ -2,7 +2,7 @@
 
 A **zero-dependency** Node MCP (Model Context Protocol) server for
 [AnythingLLM](https://anythingllm.com), exposing async chat **and** workspace
-management over the AnythingLLM REST API. Node stdlib only — no
+management over the AnythingLLM REST API. Node stdlib only - no
 `@modelcontextprotocol/sdk`, nothing to break on reinstall, no SDK drift.
 
 ## Why we made this
@@ -21,20 +21,14 @@ Claude Code is ~60 seconds and is not configurable.** The `timeout` field in
 execution (open issues: anthropics/claude-code
 [#43791](https://github.com/anthropics/claude-code/issues/43791),
 [#22542](https://github.com/anthropics/claude-code/issues/22542)). Every long
-answer from the stock AnythingLLM MCP server's synchronous `chat_with_workspace`
-died at 60s. Only the AnythingLLM web UI, which has no such cap, worked.
+answer from the stock synchronous `chat_with_workspace` died at 60s.
 
-The fix isn't a longer timeout (you can't set one) — it's to **never block a
+The fix isn't a longer timeout (you can't set one) - it's to **never block a
 call**. `ask_workspace` starts the query and returns a `job_id` instantly;
 `get_answer` fetches the result when it's ready. No single call is long, so the
-timeout never fires, no matter how slow the model.
-
-While replacing the chat path, we also recreated the workspace-management tools
-we relied on (list/get/update/create/delete workspaces, list documents, manage
-embeddings) directly over the REST API — so this one server fully replaces the
-stock `anythingllm` MCP server, and does it with zero dependencies for
-resilience (the stock server had broke on a bad API-key init and a
-reinstall-wiped patch; stdlib-only avoids that whole class of problem).
+timeout never fires, no matter how slow the model. We also recreated the
+workspace-management tools over REST so this one server fully replaces the stock
+`anythingllm` MCP server.
 
 ## Tools
 
@@ -48,19 +42,38 @@ reinstall-wiped patch; stdlib-only avoids that whole class of problem).
 | `create_workspace(name)` | Create a workspace. |
 | `delete_workspace(slug)` | Delete a workspace (destructive). |
 | `list_documents()` | System document/vector file tree (`localFiles`). |
-| `update_embeddings(slug, adds?, deletes?)` | Add/remove documents in a workspace's embeddings (paths from `list_documents`/`get_workspace`). |
+| `update_embeddings(slug, adds?, deletes?)` | Add/remove documents in a workspace's embeddings. |
 
-## Install
+## Installation - two ways (pick one)
 
-1. `git clone` this repo (e.g. to `C:\Tools\anythingllm-async-mcp`). No `npm install` needed.
-2. Register it in Claude Desktop's `claude_desktop_config.json` (see `config.example.json`):
+There are two supported ways to add this server to Claude Desktop. **Use one at
+a time** - both expose the same 9 tools, so running both together just gives you
+duplicate tools.
+
+### Option A - One-click Desktop Extension (`.mcpb`)  *(recommended for most people)*
+
+Download `anythingllm-mcp-<version>.mcpb` from the
+[Releases](https://github.com/jbowensii/anythingllm-mcp/releases) page (or build
+it yourself: `npx @anthropic-ai/mcpb pack . anythingllm-mcp.mcpb`), then
+double-click it - or in Claude Desktop go to **Settings -> Extensions ->
+Advanced -> Install extension**. It prompts you for your **AnythingLLM Base URL**
+and **API key** and stores them for you.
+
+**Why choose this:** easiest, no hand-editing JSON, no `git` needed; Claude
+Desktop manages starting/stopping the server and keeps the key in the
+extension's own settings. Best if you just want it working.
+
+### Option B - Manual config (`claude_desktop_config.json`)  *(power users / servers / pinning)*
+
+Clone the repo and add this block under `mcpServers` (see `config.example.json`),
+then restart Claude Desktop:
 
 ```json
 {
   "mcpServers": {
-    "anythingllm-async": {
-      "command": "C:\\Program Files\\nodejs\\node.exe",
-      "args": ["C:\\Tools\\anythingllm-async-mcp\\server.js"],
+    "anythingllm": {
+      "command": "node",
+      "args": ["C:\\path\\to\\anythingllm-mcp\\server.js"],
       "env": {
         "ANYTHINGLLM_BASE_URL": "http://your-anythingllm-host:3001",
         "ANYTHINGLLM_API_KEY": "<YOUR_ANYTHINGLLM_API_KEY>"
@@ -70,15 +83,37 @@ reinstall-wiped patch; stdlib-only avoids that whole class of problem).
 }
 ```
 
-3. Restart Claude Desktop. It launches/stops the server automatically.
+**Why choose this:** full control and transparency - you can read/edit the env
+and args directly, pin to a specific checkout, `git pull` to update, and script
+the same config across machines. Best for homelab/server setups and anyone who
+prefers config-as-code over a packaged bundle.
 
-### Option B - One-click Desktop Extension (.mcpb)
+## The install warning, and signing
 
-Build the bundle with the official packer and install it via Claude Desktop:
+Both methods show a one-time "this extension/server isn't verified - allow?"
+style prompt. That's **expected and normal** for a community MCP server you
+built or downloaded yourself: Claude Desktop is telling you it can't vouch for
+the publisher, so *you* are the one vouching for the code. That's reasonable here
+- the whole server is ~200 lines of dependency-free JavaScript you can read in
+`server.js` before you trust it.
 
-```nnpx @anthropic-ai/mcpb pack . anythingllm-mcp.mcpb
-```n
-Then double-click `anythingllm-mcp.mcpb` (or Claude Desktop -> Settings -> Extensions -> Advanced -> Install extension), and enter your AnythingLLM Base URL and API key when prompted. A prebuilt `.mcpb` is attached to each GitHub Release. Note: use the config-file method OR the extension, not both at once (they expose the same tools twice).
+Removing the prompt requires a signature Claude Desktop **trusts**, and that's
+harder than it sounds:
+
+- `mcpb sign` (the bundle's own signing command) needs a **local PEM certificate
+  + private key** on disk.
+- A **self-signed** cert signs the bundle but still shows as an *untrusted*
+  publisher - often looking worse than unsigned, so we ship the release
+  **unsigned by design**.
+- **Cloud / HSM code-signing** (e.g. SSL.com eSigner, DigiCert KeyLocker, Azure
+  Trusted Signing) keeps the private key non-exportable, so it can't produce the
+  `key.pem` `mcpb sign` needs. And classic **Authenticode / `signtool`** signs
+  Windows PE files (`.exe`/`.msi`), not a `.mcpb` (a ZIP with its own signature
+  scheme) - so a normal code-signing cert doesn't apply here either.
+
+Bottom line: for a personal/community extension, verify the source and accept
+the one-time prompt. Signing only meaningfully helps if you have a CA-chained,
+**exportable** code-signing cert to feed `mcpb sign`.
 
 ## Usage
 
@@ -101,9 +136,9 @@ node test.js               # end-to-end smoke test (drives the MCP protocol over
 
 ## Security
 
-- The API key is read from the `ANYTHINGLLM_API_KEY` environment variable — never hard-coded.
+- The API key is read from the `ANYTHINGLLM_API_KEY` environment variable - never hard-coded.
 - `.gitignore` excludes `.env`, `claude_desktop_config*.json`, and backups so secrets never get committed.
 
 ## License
 
-MIT — see `LICENSE`.
+MIT - see `LICENSE`.
