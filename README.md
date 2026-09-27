@@ -72,6 +72,14 @@ reinstall-wiped patch; stdlib-only avoids that whole class of problem).
 
 3. Restart Claude Desktop. It launches/stops the server automatically.
 
+### Option B - One-click Desktop Extension (.mcpb)
+
+Build the bundle with the official packer and install it via Claude Desktop:
+
+```nnpx @anthropic-ai/mcpb pack . anythingllm-mcp.mcpb
+```n
+Then double-click `anythingllm-mcp.mcpb` (or Claude Desktop -> Settings -> Extensions -> Advanced -> Install extension), and enter your AnythingLLM Base URL and API key when prompted. A prebuilt `.mcpb` is attached to each GitHub Release. Note: use the config-file method OR the extension, not both at once (they expose the same tools twice).
+
 ## Usage
 
 - **Query:** `ask_workspace` with a workspace `slug` + question -> note the `job_id`.

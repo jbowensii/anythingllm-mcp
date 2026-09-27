@@ -1,0 +1,50 @@
+{
+  "manifest_version": "0.3",
+  "name": "anythingllm-mcp",
+  "display_name": "AnythingLLM (async + management)",
+  "version": "2.0.0",
+  "description": "Async chat + workspace management for AnythingLLM over its REST API. The async pattern (ask_workspace -> get_answer) avoids the ~60s MCP tool-call timeout on slow local models.",
+  "author": { "name": "John Owens", "url": "https://github.com/jbowensii/anythingllm-mcp" },
+  "homepage": "https://github.com/jbowensii/anythingllm-mcp",
+  "repository": { "type": "git", "url": "https://github.com/jbowensii/anythingllm-mcp" },
+  "license": "MIT",
+  "server": {
+    "type": "node",
+    "entry_point": "server.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server.js"],
+      "env": {
+        "ANYTHINGLLM_BASE_URL": "${user_config.base_url}",
+        "ANYTHINGLLM_API_KEY": "${user_config.api_key}"
+      }
+    }
+  },
+  "user_config": {
+    "base_url": {
+      "type": "string",
+      "title": "AnythingLLM Base URL",
+      "description": "Base URL of your AnythingLLM instance, e.g. http://10.47.40.43:3001",
+      "required": true
+    },
+    "api_key": {
+      "type": "string",
+      "title": "AnythingLLM API Key",
+      "description": "Developer API key from AnythingLLM (Settings -> Tools -> Developer API)",
+      "required": true,
+      "sensitive": true
+    }
+  },
+  "tools": [
+    { "name": "ask_workspace", "description": "Start an async workspace chat query; returns a job_id instantly." },
+    { "name": "get_answer", "description": "Fetch an ask_workspace job by job_id (pending|done|error)." },
+    { "name": "list_workspaces", "description": "List all workspaces." },
+    { "name": "get_workspace", "description": "Get one workspace's settings and documents." },
+    { "name": "update_workspace", "description": "Update a workspace's settings." },
+    { "name": "create_workspace", "description": "Create a workspace." },
+    { "name": "delete_workspace", "description": "Delete a workspace." },
+    { "name": "list_documents", "description": "List documents known to the system." },
+    { "name": "update_embeddings", "description": "Add/remove documents in a workspace's embeddings." }
+  ],
+  "compatibility": { "runtimes": { "node": ">=18.0.0" } }
+}
