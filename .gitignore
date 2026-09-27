@@ -1,0 +1,6 @@
+node_modules/
+*.log
+.env
+*.local
+claude_desktop_config*.json
+*.bak-*

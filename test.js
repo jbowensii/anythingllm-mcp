@@ -1,0 +1,26 @@
+const fs = require("fs"), path = require("path");
+const { spawn } = require("child_process");
+const cfg = JSON.parse(fs.readFileSync(path.join(process.env.APPDATA,"Claude","claude_desktop_config.json"),"utf8"));
+const env = Object.assign({}, process.env, cfg.mcpServers["anythingllm-async"].env);
+const srv = spawn(process.execPath, ["C:\\Tools\\anythingllm-async-mcp\\server.js"], { env });
+let buf=""; const pending=[];
+srv.stdout.on("data",d=>{ buf+=d; let i; while((i=buf.indexOf("\n"))>=0){ const l=buf.slice(0,i).trim(); buf=buf.slice(i+1); if(l) pending.push(JSON.parse(l)); } });
+srv.stderr.on("data",d=>process.stderr.write("[err] "+d));
+const send=o=>srv.stdin.write(JSON.stringify(o)+"\n");
+const waitFor=(id,ms=15000)=>new Promise((res,rej)=>{const t=Date.now();const iv=setInterval(()=>{const m=pending.find(p=>p.id===id);if(m){clearInterval(iv);pending.splice(pending.indexOf(m),1);res(m);}else if(Date.now()-t>ms){clearInterval(iv);rej(new Error("timeout "+id));}},40);});
+(async()=>{
+  send({jsonrpc:"2.0",id:1,method:"initialize",params:{protocolVersion:"2024-11-05"}});
+  const init=await waitFor(1); console.log("init:", init.result.serverInfo.name, init.result.serverInfo.version);
+  send({jsonrpc:"2.0",id:2,method:"tools/list"});
+  console.log("tools:", (await waitFor(2)).result.tools.map(t=>t.name).join(", "));
+  send({jsonrpc:"2.0",id:3,method:"tools/call",params:{name:"list_workspaces",arguments:{}}});
+  const ws=JSON.parse((await waitFor(3)).result.content[0].text);
+  console.log("list_workspaces:", ws.map(w=>w.slug+"("+w.chatModel+")").join(" | "));
+  send({jsonrpc:"2.0",id:4,method:"tools/call",params:{name:"get_workspace",arguments:{slug:"shadowrun-6e"}}});
+  const gw=JSON.parse((await waitFor(4)).result.content[0].text);
+  console.log("get_workspace shadowrun-6e: mode="+gw.chatMode+" model="+gw.chatModel+" topN="+gw.topN+" docs="+((gw.documents||[]).length));
+  send({jsonrpc:"2.0",id:5,method:"tools/call",params:{name:"list_documents",arguments:{}}});
+  const ld=JSON.parse((await waitFor(5)).result.content[0].text);
+  console.log("list_documents top key:", Object.keys(ld).join(","));
+  srv.kill(); process.exit(0);
+})().catch(e=>{console.error("FAIL:",e.message);srv.kill();process.exit(1);});

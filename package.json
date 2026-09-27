@@ -1,0 +1,13 @@
+{
+  "name": "anythingllm-mcp",
+  "version": "2.0.0",
+  "description": "Zero-dependency Node MCP server for AnythingLLM: async chat + workspace management over the REST API.",
+  "main": "server.js",
+  "type": "commonjs",
+  "bin": { "anythingllm-mcp": "server.js" },
+  "scripts": { "start": "node server.js", "test": "node test.js" },
+  "engines": { "node": ">=18" },
+  "license": "MIT",
+  "author": "John Owens",
+  "dependencies": {}
+}

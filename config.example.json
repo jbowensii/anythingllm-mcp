@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "anythingllm-async": {
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": ["C:\\Tools\\anythingllm-async-mcp\\server.js"],
+      "env": {
+        "ANYTHINGLLM_BASE_URL": "http://your-anythingllm-host:3001",
+        "ANYTHINGLLM_API_KEY": "<YOUR_ANYTHINGLLM_API_KEY>"
+      }
+    }
+  }
+}
