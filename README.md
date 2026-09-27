@@ -88,6 +88,16 @@ and args directly, pin to a specific checkout, `git pull` to update, and script
 the same config across machines. Best for homelab/server setups and anyone who
 prefers config-as-code over a packaged bundle.
 
+### Option C - Signed Windows installer (`.exe`)  *(easiest for non-technical users)*
+
+Download `AnythingLLM-MCP-Setup-<version>.exe` from the
+[Releases](https://github.com/jbowensii/anythingllm-mcp/releases) page and run it.
+It is **Authenticode-signed** (SSL.com OV certificate, "John B Owens II"), so it
+runs without the "unknown publisher" SmartScreen warning. It prompts for your
+Base URL + API key, installs `server.js` to `%LOCALAPPDATA%\anythingllm-mcp`, and
+writes the config entry for you. Requires Node.js 18+ on PATH. (Uses the
+config-file method under the hood - don't also run the `.mcpb` extension, or
+you'll get duplicate tools.)
 ## The install warning, and signing
 
 Both methods show a one-time "this extension/server isn't verified - allow?"
