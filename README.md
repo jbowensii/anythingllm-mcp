@@ -5,16 +5,36 @@ A **zero-dependency** Node MCP (Model Context Protocol) server for
 management over the AnythingLLM REST API. Node stdlib only — no
 `@modelcontextprotocol/sdk`, nothing to break on reinstall, no SDK drift.
 
-## Why
+## Why we made this
 
-The MCP tool-call timeout in Claude Desktop / Claude Code is ~60s and is **not**
-configurable (the `timeout` config field and `MCP_TIMEOUT` are not honored for
-per-call execution — anthropics/claude-code #43791, #22542). Slow local models
-(e.g. Qwen 32B on modest VRAM, ~4-5 tok/s) blow past that on a normal answer.
+This came out of building a strict, no-fabrication RAG setup in AnythingLLM over
+a large local library (tabletop RPG rulebooks) served by self-hosted Ollama.
 
-Instead of fighting the timeout, `ask_workspace` starts the query and returns a
-`job_id` **instantly**; `get_answer` fetches the result when ready. No single
-call ever blocks, so the timeout never fires.
+To stop the model inventing rules, we moved the fact-retrieval workspace onto a
+bigger local model (Qwen 32B) for stronger grounding. Bigger local models are
+slow on modest VRAM (~4-5 tok/s once the model spills to CPU), so a normal
+answer takes well over a minute.
+
+That collided with a hard limit: **the MCP tool-call timeout in Claude Desktop /
+Claude Code is ~60 seconds and is not configurable.** The `timeout` field in
+`claude_desktop_config.json` and `MCP_TIMEOUT` are not honored for per-call
+execution (open issues: anthropics/claude-code
+[#43791](https://github.com/anthropics/claude-code/issues/43791),
+[#22542](https://github.com/anthropics/claude-code/issues/22542)). Every long
+answer from the stock AnythingLLM MCP server's synchronous `chat_with_workspace`
+died at 60s. Only the AnythingLLM web UI, which has no such cap, worked.
+
+The fix isn't a longer timeout (you can't set one) — it's to **never block a
+call**. `ask_workspace` starts the query and returns a `job_id` instantly;
+`get_answer` fetches the result when it's ready. No single call is long, so the
+timeout never fires, no matter how slow the model.
+
+While replacing the chat path, we also recreated the workspace-management tools
+we relied on (list/get/update/create/delete workspaces, list documents, manage
+embeddings) directly over the REST API — so this one server fully replaces the
+stock `anythingllm` MCP server, and does it with zero dependencies for
+resilience (the stock server had broke on a bad API-key init and a
+reinstall-wiped patch; stdlib-only avoids that whole class of problem).
 
 ## Tools
 
