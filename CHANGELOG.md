@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.1.0 - 2026-09-27
+
+Packaging & distribution release (no server logic changes).
+
+### Added
+- Claude Desktop Extension bundle (`.mcpb`) with a `manifest.json` that prompts for Base URL + API key on install.
+- Signed Windows installer (`AnythingLLM-MCP-Setup-*.exe`, Authenticode / SSL.com OV cert) that installs the config-file method and clears SmartScreen.
+- README now documents three install methods (extension, manual config, signed installer) and the signing/warning reality.
 ## v2.0.0 — 2026-09-27
 
 Full replacement for the stock AnythingLLM MCP server: async chat plus workspace

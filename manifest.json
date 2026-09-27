@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "anythingllm-mcp",
   "display_name": "AnythingLLM (async + management)",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Async chat + workspace management for AnythingLLM over its REST API. The async pattern (ask_workspace -> get_answer) avoids the ~60s MCP tool-call timeout on slow local models.",
   "author": { "name": "John Owens", "url": "https://github.com/jbowensii/anythingllm-mcp" },
   "homepage": "https://github.com/jbowensii/anythingllm-mcp",

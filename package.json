@@ -1,6 +1,6 @@
 {
   "name": "anythingllm-mcp",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Zero-dependency Node MCP server for AnythingLLM: async chat + workspace management over the REST API.",
   "main": "server.js",
   "type": "commonjs",

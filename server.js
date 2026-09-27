@@ -107,7 +107,7 @@ readline.createInterface({ input: process.stdin }).on("line", (line) => {
   line = line.trim(); if (!line) return;
   let m; try { m = JSON.parse(line); } catch { return; }
   const { id, method, params } = m;
-  if (method === "initialize") return ok(id, { protocolVersion:(params && params.protocolVersion)||"2024-11-05", capabilities:{ tools:{} }, serverInfo:{ name:"anythingllm-mcp", version:"2.0.0" } });
+  if (method === "initialize") return ok(id, { protocolVersion:(params && params.protocolVersion)||"2024-11-05", capabilities:{ tools:{} }, serverInfo:{ name:"anythingllm-mcp", version:"2.1.0" } });
   if (typeof method === "string" && method.startsWith("notifications/")) return;
   if (method === "tools/list") return ok(id, { tools: TOOLS });
   if (method === "tools/call") return handleCall(id, params);
